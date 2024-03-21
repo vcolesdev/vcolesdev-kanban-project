@@ -1,17 +1,22 @@
 import {useState} from "react";
 import {useSortable} from "@dnd-kit/sortable";
 import DeleteIcon from "../icons/DeleteIcon.tsx";
-import {Column, Id} from "../types.ts";
+import {Column, Id, Task} from "../types.ts";
 import {CSS} from "@dnd-kit/utilities";
+import PlusIcon from "../icons/PlusIcon.tsx";
+import TaskCard from "./TaskCard.tsx";
 
 interface Props {
   column: Column;
   deleteColumn: (id: Id) => void;
   updateColumn: (id: Id, title: string) => void;
+  createTask: (columnId: Id) => void;
+  deleteTask: (id: Id) => void;
+  tasks: Task[];
 }
 
 function ColumnContainer(props: Props) {
-  const {column, deleteColumn, updateColumn} = props;
+  const {column, deleteColumn, updateColumn, createTask, deleteTask, tasks} = props;
 
   // State for the edit mode of the column, currently editing...
   const [editMode, setEditMode] = useState(false);
@@ -157,11 +162,45 @@ function ColumnContainer(props: Props) {
         </button>
       </div>
       {/** Column Task Container **/}
-      <div className="flex flex-grow">
-        Content
+      <div className="
+        flex
+        flex-grow
+        flex-col
+        gap-4
+        p-2
+        overflow-x-hidden
+        overflow-y-auto"
+      >
+        {tasks.map((task) => {
+          return (
+            <TaskCard
+              key={task.id}
+              task={task}
+              deleteTask={deleteTask}
+            />
+          )
+        })}
       </div>
       {/** Column Footer **/}
-      <div>Footer</div>
+      <button className="
+        flex
+        gap-2
+        items-center
+        border-columnBackgroundColor
+        border-2
+        rounded-md
+        p-4
+        hover:bg-mainBackgroundColor
+        hover:text-rose-300
+        active:bg-black
+        "
+        onClick={() => {
+          createTask(column.id);
+        }}
+      >
+        <PlusIcon />
+        Add Task
+      </button>
     </div>
   )
 }

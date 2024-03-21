@@ -2,7 +2,7 @@ import {createPortal} from "react-dom";
 import ColumnContainer from "./ColumnContainer.tsx";
 import PlusIcon from "../icons/PlusIcon.tsx";
 import {useState, useEffect, useMemo} from "react";
-import {Column, Id} from "../types.ts";
+import {Column, Id, Task} from "../types.ts";
 
 import {
   DndContext,
@@ -15,11 +15,18 @@ import {
 } from "@dnd-kit/core";
 import {arrayMove, SortableContext} from "@dnd-kit/sortable";
 
+/**
+ * KanbanBoard()
+ * The main component for the Kanban board
+ */
 function KanbanBoard() {
   const [columns, setColumns] = useState<Column[]>([]);
 
   // Get the ids of the columns
   const columnsId: Id[] = useMemo(() => columns.map((col) => col.id), [columns]);
+
+  // Create a state to store tasks
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   // Get a reference to the active column
   const [activeColumn, setActiveColumn] = useState<Column | null>(null);
@@ -89,6 +96,30 @@ function KanbanBoard() {
   }
 
   /**
+   * createTask()
+   * @param columnId
+   * Create a new task in a column by id
+   */
+  const createTask = (columnId: Id) => {
+    const newTask: Task = {
+      id: generateId(),
+      columnId,
+      content: `Task ${tasks.length + 1}`
+    }
+    setTasks([...tasks, newTask]);
+  }
+
+  /**
+   * deleteTask()
+   * @param id
+   * Delete a task from the tasks array by id
+   */
+  const deleteTask = (id: Id) => {
+    const newTasks = tasks.filter((task) => task.id !== id);
+    setTasks(newTasks);
+  }
+
+  /**
    * onDragStart()
    * @param event
    * Dispatch an action when a drag starts
@@ -149,6 +180,12 @@ function KanbanBoard() {
                 column={col}
                 deleteColumn={deleteColumn}
                 updateColumn={updateColumn}
+                createTask={createTask}
+                deleteTask={deleteTask}
+                tasks={tasks.filter(
+                  (task) => {
+                    return task.columnId === col.id
+                  })}
               />
             )
           })}
@@ -187,6 +224,12 @@ function KanbanBoard() {
                 column={activeColumn}
                 deleteColumn={deleteColumn}
                 updateColumn={updateColumn}
+                createTask={createTask}
+                deleteTask={deleteTask}
+                tasks={tasks.filter(
+                  (task) => {
+                    return task.columnId === activeColumn.id
+                  })}
               />
             )}
           </DragOverlay>,
