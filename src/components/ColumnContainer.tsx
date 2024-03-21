@@ -1,3 +1,4 @@
+import {useState} from "react";
 import {useSortable} from "@dnd-kit/sortable";
 import DeleteIcon from "../icons/DeleteIcon.tsx";
 import {Column, Id} from "../types.ts";
@@ -6,10 +7,14 @@ import {CSS} from "@dnd-kit/utilities";
 interface Props {
   column: Column;
   deleteColumn: (id: Id) => void;
+  updateColumn: (id: Id, title: string) => void;
 }
 
 function ColumnContainer(props: Props) {
-  const {column, deleteColumn} = props;
+  const {column, deleteColumn, updateColumn} = props;
+
+  // State for the edit mode of the column, currently editing...
+  const [editMode, setEditMode] = useState(false);
 
   const {
     setNodeRef,
@@ -23,7 +28,8 @@ function ColumnContainer(props: Props) {
       data: {
         type: "Column",
         column
-      }
+      },
+      disabled: editMode // Disable dragging when editing the column title
   })
 
   // Style for the column
@@ -87,6 +93,10 @@ function ColumnContainer(props: Props) {
           items-center
           justify-between
           "
+          onClick={() => {
+            // You can edit the column title
+            setEditMode(true);
+          }}
       >
         <div className="flex gap-2">
           <div className="
@@ -102,7 +112,33 @@ function ColumnContainer(props: Props) {
           >
             0
           </div>
-          {column.title}
+          {!editMode && column.title}
+          {editMode && (
+            <input
+             autoFocus
+             className="
+              bg-black
+              focus:border-rose-500
+              border
+              rounded
+              outline-none
+              px-2
+             "
+             value={column.title}
+             onChange={(event) => {
+               // Update the column title
+               updateColumn(column.id, event.target.value);
+             }}
+             onBlur={() => {
+               // Save the new title when the input is unfocused
+               setEditMode(false);
+             }}
+             onKeyDown={(event) => {
+               if (event.key !== "Enter") return;
+               setEditMode(false);
+             }}
+            />
+          )}
         </div>
         <button
           className="

@@ -71,6 +71,24 @@ function KanbanBoard() {
   }
 
   /**
+   * updateColumn()
+   * @param id
+   * @param title
+   * Update the title of a column by id
+   */
+  const updateColumn = (id: Id, title: string) => {
+    const newColumns = columns.map((col) => {
+      // If the column id does not match the id, return the column unchanged
+      if (col.id !== id) {
+        return col;
+      }
+      return {...col, title};
+    })
+    // Update the columns array with the new columns
+    setColumns(newColumns);
+  }
+
+  /**
    * onDragStart()
    * @param event
    * Dispatch an action when a drag starts
@@ -130,6 +148,7 @@ function KanbanBoard() {
                 key={col.id}
                 column={col}
                 deleteColumn={deleteColumn}
+                updateColumn={updateColumn}
               />
             )
           })}
@@ -164,7 +183,11 @@ function KanbanBoard() {
         {createPortal(
           <DragOverlay>
             {activeColumn && (
-              <ColumnContainer column={activeColumn} deleteColumn={deleteColumn} />
+              <ColumnContainer
+                column={activeColumn}
+                deleteColumn={deleteColumn}
+                updateColumn={updateColumn}
+              />
             )}
           </DragOverlay>,
           document.body
