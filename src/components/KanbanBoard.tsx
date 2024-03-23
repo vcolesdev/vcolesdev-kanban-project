@@ -120,6 +120,22 @@ function KanbanBoard() {
   }
 
   /**
+   * updateTask()
+   * @param id
+   * @param content
+   * Update the content of a task by id
+   */
+  const updateTask = (id: Id, content: string) => {
+    const newTasks = tasks.map((task) => {
+      if (task.id !== id) {
+        return task;
+      }
+      return {...task, content};
+    });
+    setTasks(newTasks);
+  }
+
+  /**
    * onDragStart()
    * @param event
    * Dispatch an action when a drag starts
@@ -182,6 +198,7 @@ function KanbanBoard() {
                 updateColumn={updateColumn}
                 createTask={createTask}
                 deleteTask={deleteTask}
+                updateTask={updateTask}
                 tasks={tasks.filter(
                   (task) => {
                     return task.columnId === col.id
@@ -226,6 +243,7 @@ function KanbanBoard() {
                 updateColumn={updateColumn}
                 createTask={createTask}
                 deleteTask={deleteTask}
+                updateTask={updateTask}
                 tasks={tasks.filter(
                   (task) => {
                     return task.columnId === activeColumn.id
