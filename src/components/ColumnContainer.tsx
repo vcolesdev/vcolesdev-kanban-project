@@ -1,5 +1,5 @@
-import {useState} from "react";
-import {useSortable} from "@dnd-kit/sortable";
+import {useMemo, useState} from "react";
+import {SortableContext, useSortable} from "@dnd-kit/sortable";
 import DeleteIcon from "../icons/DeleteIcon.tsx";
 import {Column, Id, Task} from "../types.ts";
 import {CSS} from "@dnd-kit/utilities";
@@ -44,7 +44,12 @@ function ColumnContainer(props: Props) {
         column
       },
       disabled: editMode // Disable dragging when editing the column title
-  })
+  });
+
+  // Get an array of task ids
+  const tasksIds = useMemo(() => {
+    return tasks.map((task) => task.id);
+  }, [tasks]);
 
   // Style for the column
   const style = {
@@ -180,6 +185,7 @@ function ColumnContainer(props: Props) {
         overflow-x-hidden
         overflow-y-auto"
       >
+        <SortableContext items={tasksIds}>
         {tasks.map((task) => {
           return (
             <TaskCard
@@ -190,6 +196,7 @@ function ColumnContainer(props: Props) {
             />
           )
         })}
+        </SortableContext>
       </div>
       {/** Column Footer **/}
       <button className="

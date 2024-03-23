@@ -6,7 +6,7 @@ import {Column, Id, Task} from "../types.ts";
 
 import {
   DndContext,
-  DragEndEvent,
+  DragEndEvent, DragOverEvent,
   DragOverlay,
   DragStartEvent,
   PointerSensor, TouchSensor,
@@ -14,6 +14,7 @@ import {
   useSensors
 } from "@dnd-kit/core";
 import {arrayMove, SortableContext} from "@dnd-kit/sortable";
+import TaskCard from "./TaskCard.tsx";
 
 /**
  * KanbanBoard()
@@ -30,6 +31,9 @@ function KanbanBoard() {
 
   // Get a reference to the active column
   const [activeColumn, setActiveColumn] = useState<Column | null>(null);
+
+  // Get a reference to the active task
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -75,6 +79,10 @@ function KanbanBoard() {
     // Choose all the columns except the one with this id
     const filteredColumns = columns.filter((col) => col.id !== id);
     setColumns(filteredColumns);
+
+    // Choose all the tasks except the ones with this column id
+    const newTasks = tasks.filter((task) => task.columnId !== id);
+    setTasks(newTasks);
   }
 
   /**
@@ -146,6 +154,12 @@ function KanbanBoard() {
       setActiveColumn(event.active.data.current.column);
       return;
     }
+
+    // If the active data is a task, set the active task
+    if (event.active.data.current?.type === "Task") {
+      setActiveTask(event.active.data.current.task);
+      return;
+    }
   }
 
   /**
@@ -154,6 +168,11 @@ function KanbanBoard() {
    * Dispatch an action when a drag ends
    */
   const onDragEnd = (event: DragEndEvent) => {
+    // When drag ends we move our drag overlay components
+    setActiveColumn(null);
+    setActiveTask(null);
+
+    // Get event properties
     const {active, over} = event;
     if (!over) return;
 
@@ -168,6 +187,58 @@ function KanbanBoard() {
 
       return arrayMove(columns, activeColumnsIndex, overColumnIndex);
     })
+  }
+
+  /**
+   * onDragOver()
+   * @param event
+   * Dispatch an action when a drag is over
+   */
+  const onDragOver = (event: DragOverEvent) => {
+    const {active, over} = event;
+    if (!over) return;
+
+    const activeId = active.id;
+    const overId = over.id;
+
+    if (activeId === overId) return;
+
+    // Dropping a task over another task, save the current active and over task states
+    const isActiveTask = active.data.current?.type === "Task";
+    const isOverTask = over.data.current?.type === "Task";
+
+    // If there is no active task, return
+    if (!isActiveTask) return;
+
+    // If both of these are active/true, then we can swap the tasks
+    if (isActiveTask && isOverTask) {
+      setTasks((tasks) => {
+        // Find the index of both tasks in the tasks array
+        const activeIndex = tasks.findIndex((task) => task.id === activeId);
+        const overIndex = tasks.findIndex((task) => task.id === overId);
+
+        // If the column Ids of the tasks are different, make them the same
+        tasks[activeIndex].columnId = tasks[overIndex].columnId;
+
+        // Swap the tasks
+        return arrayMove(tasks, activeIndex, overIndex);
+      });
+    }
+
+    // Dropping a task over a column
+    const isOverColumn = over.data.current?.type === "Column";
+
+    if (isActiveTask && isOverColumn) {
+      setTasks((tasks) => {
+        const activeIndex = tasks.findIndex((task) => task.id === activeId);
+
+        tasks[activeIndex].columnId = overId;
+
+        // arrayMove() with the same index because we are triggering a re-render
+        // of our tasks, because we're creating a new array
+        return arrayMove(tasks, activeIndex, activeIndex);
+      });
+    }
   }
 
   return (
@@ -185,6 +256,7 @@ function KanbanBoard() {
         sensors={sensors}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
+        onDragOver={onDragOver}
       >
         <div className="m-auto flex gap-4">
         <div className="flex gap-4">
@@ -250,6 +322,15 @@ function KanbanBoard() {
                   })}
               />
             )}
+            {
+              activeTask && (
+                <TaskCard
+                  task={activeTask}
+                  deleteTask={deleteTask}
+                  updateTask={updateTask}
+                />
+              )
+            }
           </DragOverlay>,
           document.body
         )}
